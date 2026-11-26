@@ -3,7 +3,7 @@ import { InteractiveBotAvatar } from "@/components/InteractiveBotAvatar";
 
 interface DownloadPlatform {
   available: boolean;
-  downloadUrl?: string | null;
+  artifacts?: Array<{ fileName: string; relativePath: string }>;
 }
 
 interface DownloadsPayload {
@@ -72,10 +72,10 @@ export function DuskDownloadPage() {
             Open it, sign in to the AI you already use or start on the free models, and your first bot is working a couple of minutes later. Free for personal use, no account needed.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-2.5">
-            {data?.platforms?.windows?.available && data.platforms.windows.downloadUrl ? (
+            {data?.platforms?.windows?.available && data.platforms.windows.artifacts?.[0] ? (
               <a
-                href={data.platforms.windows.downloadUrl}
-                download
+                href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.windows.artifacts[0].fileName)}`}
+                download={data.platforms.windows.artifacts[0].fileName}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline hover:bg-[#2a2a30]"
               >
                 Download for Windows
@@ -139,10 +139,10 @@ export function DuskDownloadPage() {
                 <b className="text-[16px] font-medium text-[#131316]">Windows</b>
                 <span className="ml-2 text-[14px] text-[#55555f]">x64 · Installer .exe</span>
               </div>
-              {data?.platforms?.windows?.available && data.platforms.windows.downloadUrl ? (
+              {data?.platforms?.windows?.available && data.platforms.windows.artifacts?.[0] ? (
                 <a
-                  href={data.platforms.windows.downloadUrl}
-                  download
+                  href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.windows.artifacts[0].fileName)}`}
+                  download={data.platforms.windows.artifacts[0].fileName}
                   className="inline-flex min-h-[40px] items-center rounded-full bg-[#131316] px-5 text-[14px] font-medium text-white no-underline hover:bg-[#2a2a30]"
                 >
                   Download
@@ -158,10 +158,10 @@ export function DuskDownloadPage() {
                 <b className="text-[16px] font-medium text-[#131316]">Linux</b>
                 <span className="ml-2 text-[14px] text-[#55555f]">x64 · .deb &amp; .AppImage</span>
               </div>
-              {data?.platforms?.linux?.available && data.platforms.linux.downloadUrl ? (
+              {data?.platforms?.linux?.available && data.platforms.linux.artifacts?.[0] ? (
                 <a
-                  href={data.platforms.linux.downloadUrl}
-                  download
+                  href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.linux.artifacts[0].fileName)}`}
+                  download={data.platforms.linux.artifacts[0].fileName}
                   className="inline-flex min-h-[40px] items-center rounded-full bg-[#131316] px-5 text-[14px] font-medium text-white no-underline hover:bg-[#2a2a30]"
                 >
                   Download
@@ -177,10 +177,10 @@ export function DuskDownloadPage() {
                 <b className="text-[16px] font-medium text-[#131316]">Android</b>
                 <span className="ml-2 text-[14px] text-[#55555f]">Phone app · .apk</span>
               </div>
-              {data?.platforms?.android?.available && data.platforms.android.downloadUrl ? (
+              {data?.platforms?.android?.available && data.platforms.android.artifacts?.[0] ? (
                 <a
-                  href={data.platforms.android.downloadUrl}
-                  download
+                  href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.android.artifacts[0].fileName)}`}
+                  download={data.platforms.android.artifacts[0].fileName}
                   className="inline-flex min-h-[40px] items-center rounded-full bg-[#131316] px-5 text-[14px] font-medium text-white no-underline hover:bg-[#2a2a30]"
                 >
                   Download
