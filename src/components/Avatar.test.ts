@@ -1,0 +1,149 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+
+import {
+  BotAvatar,
+  InitialsAvatar,
+  MausAvatar,
+  resolveBotAvatarOutcome,
+  type BotAvatarProps,
+  type MausAvatarProps,
+} from "./Avatar";
+
+const render = (props: Partial<MausAvatarProps>) =>
+  renderToStaticMarkup(createElement(MausAvatar, { color: "green", animated: false, ...props }));
+
+const renderBot = (bot: Partial<BotAvatarProps["bot"]>) =>
+  renderToStaticMarkup(
+    createElement(BotAvatar, { bot: { color: "green", ...bot }, animated: false }),
+  );
+
+describe("MausAvatar open-bot-avatar engine renderer", () => {
+  it("renders bunny by default when no body is given", () => {
+    const markup = render({});
+    expect(markup).toContain('data-open-avatar="bunny"');
+    expect(markup).toContain("<svg");
+  });
+
+  it("renders bunny, egg, cat, controller, and bull bodies", () => {
+    expect(render({ bodyId: "bunny" })).toContain('data-open-avatar="bunny"');
+    expect(render({ bodyId: "egg" })).toContain('data-open-avatar="egg"');
+    expect(render({ bodyId: "cat" })).toContain('data-open-avatar="cat"');
+    expect(render({ bodyId: "controller" })).toContain('data-open-avatar="controller"');
+    expect(render({ bodyId: "bull" })).toContain('data-open-avatar="bull"');
+  });
+
+  it("maps core GrabBots names to their signature open-bot-avatar specs", () => {
+    expect(renderBot({ name: "Zeus" })).toContain('data-open-avatar="bunny"');
+    expect(renderBot({ name: "Kraken" })).toContain('data-open-avatar="egg"');
+    expect(renderBot({ name: "Knull" })).toContain('data-open-avatar="cat"');
+    expect(renderBot({ name: "Xerxes" })).toContain('data-open-avatar="controller"');
+  });
+
+  it("paints the body using open-bot-avatar volumetric SVG markup", () => {
+    const markup = render({ bodyId: "controller", color: "teal" });
+    expect(markup).toContain("#14b3b0");
+    expect(markup).toContain("<svg");
+  });
+});
+
+describe("mascot facial feature contrast", () => {
+  it.each(["white", "black"] as const)("renders open-bot-avatar with mascotFaceColor=%s", (mascotFaceColor) => {
+    for (const mascotBody of ["bunny", "egg", "cat", "controller"] as const) {
+      for (const color of ["orange", "teal"] as const) {
+        const markup = renderBot({ color, mascotBody, mascotFaceColor });
+        expect(markup).toContain("<svg");
+      }
+    }
+  });
+
+  it("does not paint vector avatar elements over an uploaded image", () => {
+    const markup = renderBot({ mascotFaceColor: "black", avatarUrl: "/api/attachments/photo.png", avatarCrop: "circle" });
+    expect(markup).toContain("<img");
+    expect(markup).not.toContain("<svg");
+  });
+});
+
+describe("BotAvatar's two avatar outcomes", () => {
+  it("zooms and positions a custom image inside its crop", () => {
+    const markup = renderBot({
+      avatarUrl: "/api/attachments/cat.webp",
+      avatarCrop: "circle",
+      avatarZoom: 2,
+      avatarFocusX: 0.25,
+      avatarFocusY: 0.75,
+    });
+    expect(markup).toContain("scale(2)");
+    expect(markup).toContain("25% 75%");
+    expect(markup).toContain("border-radius:50%");
+  });
+
+  it("renders a flat cropped image for circle/rounded/square, with no mascot at all", () => {
+    const markup = renderBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "circle" });
+    expect(markup).toContain("<img");
+    expect(markup).not.toContain("<svg");
+  });
+
+  it("shows the image as it is, with no mascot face painted on it", () => {
+    const markup = renderBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "square" });
+    expect(markup).toContain("border-radius:0");
+    expect(markup).toContain("<img");
+    expect(markup).not.toContain("<image");
+    expect(markup).not.toContain("radialGradient");
+  });
+
+  it("renders the gradient mascot when the crop is mascot, image or not", () => {
+    const markup = renderBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "mascot" });
+    expect(markup).not.toContain("<img");
+    expect(markup).toContain("<svg");
+  });
+
+  it("falls back to the gradient mascot when a flat crop has no valid image", () => {
+    const markup = renderBot({ avatarUrl: undefined, avatarCrop: "circle" });
+    expect(markup).not.toContain("<img");
+    expect(markup).toContain("<svg");
+  });
+});
+
+describe("theme hooks on faces", () => {
+  it("marks a bot's picture, its gradient mascot and its carved mascot, and leaves a decorative mascot unmarked", () => {
+    expect(renderBot({ avatarUrl: "/api/attachments/a.png", avatarCrop: "circle" })).toMatch(/<span data-avatar="picture" data-avatar-kind="bot"/);
+    expect(renderBot({})).toMatch(/<span data-avatar="mascot" data-avatar-kind="bot"/);
+    expect(renderBot({ mascotBody: "ghost" })).toMatch(/<span data-avatar="mascot" data-avatar-kind="bot"/);
+    expect(render({})).not.toContain("data-avatar");
+  });
+
+  it("marks the person's picture and their initials", () => {
+    expect(renderToStaticMarkup(createElement(InitialsAvatar, { initials: "AL", avatarUrl: "/api/attachments/me.png" }))).toMatch(/<img data-avatar="picture" data-avatar-kind="person"/);
+    expect(renderToStaticMarkup(createElement(InitialsAvatar, { initials: "AL" }))).toMatch(/<div data-avatar="initials" data-avatar-kind="person"/);
+  });
+});
+
+describe("resolveBotAvatarOutcome", () => {
+  // imageFailed is set by the <img>'s onError, which renderToStaticMarkup never fires, so the decision is a pure
+  // function.
+  it("falls back to the gradient mascot for an image that failed to load", () => {
+    expect(
+      resolveBotAvatarOutcome({ avatarCrop: "circle", hasUrl: true, imageFailed: true }),
+    ).toBe("gradientMascot");
+  });
+
+  it("renders a good flat image flat", () => {
+    expect(
+      resolveBotAvatarOutcome({ avatarCrop: "rounded", hasUrl: true, imageFailed: false }),
+    ).toBe("flatImage");
+  });
+
+  it("keeps the mascot crop on the gradient mascot even with a loaded image", () => {
+    expect(
+      resolveBotAvatarOutcome({ avatarCrop: "mascot", hasUrl: true, imageFailed: false }),
+    ).toBe("gradientMascot");
+  });
+
+  it("falls back to the gradient mascot when there is no image at all", () => {
+    expect(
+      resolveBotAvatarOutcome({ avatarCrop: "square", hasUrl: false, imageFailed: false }),
+    ).toBe("gradientMascot");
+  });
+});

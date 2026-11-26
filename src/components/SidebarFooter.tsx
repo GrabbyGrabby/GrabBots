@@ -38,7 +38,7 @@ function SimpleSidebarFooter({ owner, archived }: { owner: string | null; archiv
       <CloudUsageCard />
       <SidebarPlaceStatus place={place} className="mb-2 px-1" />
       <AccountMoveStatus kind={move.kind} place={move.place} retry={move.retry} onOpen={openAccount} className="ps-1" />
-      <div className="flex items-center gap-2 rounded-[20px] border border-hairline/35 bg-card/80 p-1.5 not-first:mt-2">
+      <div className="flex items-center gap-1.5 not-first:mt-2">
         <SidebarProfileMenu simple={account} />
         <SidebarConnectApps />
         <UpdateIndicator />
@@ -72,7 +72,7 @@ export function SidebarFooter({ density, simple = false, owner = null, archived,
         <>
           <CloudRoomCard />
           <CloudUsageCard />
-          <div className="flex items-center gap-1 rounded-[18px] border border-hairline/35 bg-card/80 p-1.5 not-first:mt-2">
+          <div className="flex items-center gap-1 not-first:mt-2">
             <div className="min-w-0 flex-1">
               <SidebarProfileMenu />
             </div>

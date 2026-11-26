@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">GrabBots</title>
+  <desc id="desc">Layered cream, periwinkle, and black curved squircle mark with a crisp white checkmark.</desc>
+  <defs>
+    <clipPath id="grab-tile">
+      <rect width="1024" height="1024" rx="260" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#grab-tile)">
+    <rect width="1024" height="1024" fill="#F2E3A7" />
+    <path
+      d="M-30 390 C 60 270, 220 265, 512 315 C 804 365, 960 365, 1054 510 L 1054 1054 L -30 1054 Z"
+      fill="#9E8DF7"
+    />
+    <path
+      d="M-30 740 C 30 560, 260 540, 620 510 C 870 490, 995 535, 1054 700 L 1054 1054 L -30 1054 Z"
+      fill="#050507"
+    />
+    <path
+      d="M 192 718 L 288 814 L 456 646"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-width="68"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

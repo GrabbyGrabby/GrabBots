@@ -1,560 +1,561 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Bot, 
-  Terminal, 
-  ShieldCheck, 
-  FolderGit2, 
-  Send, 
-  Sparkles, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  Cpu, 
-  ChevronRight, 
-  Layers, 
-  Activity, 
-  Zap, 
-  Globe, 
-  CornerDownLeft,
-  Code2,
-  Lock
-} from 'lucide-react';
-import { AgentDefinition, ChatMessage } from '../core/types/agent.ts';
-import { ApprovalRequest } from '../core/types/approval.ts';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, Loader2, Menu } from "lucide-react";
+import { CLOUD_LINK_SETTINGS, openBot, StoreProvider, useStore } from "@/state/store";
+import { nextShortcutBot, shortcutBots, shownBotIds } from "@/lib/sidebar-shortcut-order";
+import { useShowThreads } from "@/lib/thread-preferences";
+import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
+import { MausBotWelcome } from "@/components/MausBotWelcome";
+import { NewBotNameHost } from "@/components/NewBotName";
+import { MemberApps } from "@/components/MemberApps";
+import { CloudTimeZoneSync } from "@/components/CloudTimeZone";
+import { cloudSignInDue, spotlightsQuiet, type WelcomeViewer } from "@/lib/onboarding";
+import { FirstConversationTour } from "@/components/onboarding/FirstConversationTour";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
+import { LiveCallHost } from "@/components/LiveCallHost";
+import { ThreadRefsProvider } from "@/components/ThreadRefs";
+import { initAnalytics } from "@/lib/analytics";
+import { useAppLoadSignal } from "@/lib/app-load";
+import { cloudAccountBridge, openCloudOnWeb } from "@/lib/cloud-add-web";
+import { parseComputerHelp } from "@/lib/computer-control";
+import { viewerClosedRelease } from "@/components/computer-takeover";
+import { Sidebar } from "@/components/Sidebar";
+import { GrabBotsOverviewPage } from "@/features/grabbots";
+import { ChatView } from "@/components/ChatView";
+import { HandoffExchangeHost } from "@/components/HandoffExchange";
+import { GroupView } from "@/components/GroupView";
+import { ForkPanel } from "@/components/ForkPanel";
+import { SIDEBAR_AND_NARROW_PANEL_FIT, SIDEBAR_AND_PANEL_FIT, SIDEBAR_INLINE, TWO_SIDE_PANELS_FIT, useMediaQuery } from "@/lib/use-media-query";
+import { anySidePanel, sidebarFoldsForPanel, type OpenSidePanels } from "@/lib/sidebar-fold";
+import { preloadConnectedApps } from "@/lib/connected-apps";
+import {
+  ActivityPanel, AnnouncementsPage, BotSettingsDialog, CloudAddDialog, ComputerPanel, FilesView, InboxPanel, InspectorPanel, KeyboardShortcutsModal, LocalVmWorkspace,
+  PluginsPanel, preloadScreens, PublishedAppsPage, RemoteAgentSettingsPanel, RemoteDesktopPanel, RoomPanel, SettingsModal, TeamFilesPage, TeamMapPage, TriggersPage,
+} from "@/components/lazy-screens";
+import { useAdvancedMode } from "@/lib/interface-mode";
+import { useRoomPanelShown } from "@/lib/room-panel";
+import { WorkspaceBackupRecovery } from "@/components/WorkspaceBackupRecovery";
+import { NotificationRail, NotificationsPanel } from "@/components/NotificationsPanel";
+import { useNotificationFeed } from "@/lib/notification-preferences";
+import { UpdateBanner } from "@/components/UpdateBanner";
+import { AppNotices } from "@/components/AppNotices";
+import { CliLoginCard } from "@/components/CliLoginCard";
+import { AppGrantNotice } from "@/components/AppGrantPrompt";
+import { BotLimitPopup } from "@/components/BotLimitPopup";
+import { CloudAsleepStrip } from "@/components/CloudAsleepStrip";
+import { LiveConnectionStrip } from "@/components/LiveConnectionStrip";
+import { CloudSendStrip } from "@/components/CloudSendStrip";
+import { HomeLine } from "@/components/HomeLine";
+import { useTeamChats } from "@/state/team-chats";
+import { needsYouVersion, useTeamPeopleLoader } from "@/state/team-people";
+import { newChatBot } from "@/state/new-chat";
+import { useTeamPresence } from "@/state/team-presence";
+import { inboxVersion, useInboxLoader, useInboxPanel, useInboxReady } from "@/state/inbox";
+import { PlacesRail } from "@/components/PlacesRail";
+import { NewLocalFromMenu } from "@/components/PlaceAddSheet";
+import { CloudHowTo } from "@/components/CloudHowTo";
+import { DesktopCapabilitiesProvider, useCaptionChrome, useDesktopCapabilities, WindowDragStrip, windowFramed } from "@/components/DesktopCapabilities";
+import { WindowCaptionButtons } from "@/components/WindowCaptionButtons";
+import { WindowFrameBar } from "@/components/WindowFrameBar";
+import { cn } from "@/lib/cn";
+import { NoEngines } from "@/components/NoEngines";
+import { CloudEngineSignIn } from "@/components/CloudEngineSignIn";
+import { CloudIntent } from "@/components/CloudIntent";
+import { cloudIntentDue, cloudIntentShown, useCloudIntent } from "@/lib/cloud-intent";
+import { CloudSetup } from "@/components/CloudSetup";
+import { CloudWelcome } from "@/components/cloud-welcome/CloudWelcome";
+import { TeamWelcome } from "@/components/TeamWelcome";
+import { ConversationShareDialogs } from "@/components/conversation-share/ConversationShareDialogs";
+import { invitedToTeam, teamWelcomeDue, useTeamWelcomeRecord } from "@/lib/team-welcome";
+import { WelcomeKeeper } from "@/components/cloud-welcome/WelcomeKeeper";
+import { EmptyChatShell } from "@/components/onboarding/EmptyChatShell";
+import { cloudFirstRun, cloudWelcomeVisible, useCloudWelcome } from "@/lib/cloud-welcome";
+import { engineReady } from "@/components/EngineLibrary";
+import { CommandPalette } from "@/components/CommandPalette";
+import { t } from "@/lib/i18n";
+import { botCycleStep, shouldOpenKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
+import { effectiveLanguage, useLanguageChoice, usePageLanguage } from "@/lib/language-preference";
+import { botUnreadCount, showBrowserUnread } from "@/lib/bot-unread";
+import { phonePairingSettingsAction, takePhonePairingRequest } from "@/lib/phone-pairing"; import { useConnectLink } from "@/lib/use-connect-link";
+import { isSettingsPage } from "@/components/settings/settings-index";
+import { useBotListDrawer } from "@/hooks/use-bot-list-drawer";
+import { useRememberedSidePanel } from "@/hooks/use-remembered-side-panel";
+import { useDesktopNotificationOpens, useExternalChatLinks } from "@/hooks/use-external-chat-links"; import { useNewBotFromOtherPlace } from "@/lib/places-together";
+import { useUsageSnapshot } from "@/hooks/use-usage-snapshot";
+import { useReadShownChatOnFocus } from "@/hooks/use-read-shown-chat";
+import { usePresence } from "@/hooks/use-presence";
+import { ChatNotice } from "@/components/ChatErrorBanner";
+import { loadingLine } from "@/lib/app-loading";
+import { useAiSwitchKeeper } from "@/lib/ai-switch";
+import { useChiefStepOpen } from "@/lib/default-bot";
+import { useSessionEnded } from "@/lib/session-ended";
+import { PairPage } from "./pair/PairPage";
+import { WebPanelPage } from "@/components/WebPanelPage";
+import { AppPreviewPanel } from "@/components/published-apps/AppPreviewPanel";
+import { FilePreviewPanel } from "@/components/FilePreviewPanel";
+import { refreshPublishedApps } from "@/lib/own-published-apps";
+import { serverFetch } from "@/lib/relay-server";
 
-export default function App() {
-  const [bots, setBots] = useState<AgentDefinition[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [selectedBot, setSelectedBot] = useState<string>('all');
-  const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
-  const [activeInspectorTab, setActiveInspectorTab] = useState<'workspace' | 'terminal' | 'byos'>('workspace');
-  const [botWorkspaceInfo, setBotWorkspaceInfo] = useState<any>(null);
-  const [isSwarmThinking, setIsSwarmThinking] = useState(false);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  // Fetch initial bots and messages
+function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
+  const { state, dispatch } = useStore();
+  useTeamChats(state.config);
+  const needsYou = needsYouVersion(state.bots, state.groups, state.notifications);
+  useTeamPeopleLoader(state.config, needsYou);
+  useInboxLoader(`${inboxVersion(state.bots) ?? ""}|${needsYou}`);
+  useEffect(() => { refreshPublishedApps(); }, []);
+  const inboxReady = useInboxReady();
+  const inboxPanel = useInboxPanel();
+  const inboxShown = inboxPanel.open && inboxReady;
+  // A Switch AI pick lands once its stopped turn's chat is idle, wherever the person is by then.
+  useAiSwitchKeeper({ bots: state.bots, dispatch });
+  const showThreads = useShowThreads();
+  const { capabilities } = useDesktopCapabilities();
+  const captionChrome = useCaptionChrome();
+  const unreadCount =
+    state.bots.filter((bot) => !bot.hidden).reduce((sum, bot) => sum + botUnreadCount(bot), 0) +
+    state.groups.filter((group) => group.unread).length;
+  const remoteClient = window.ogb?.remoteClient?.active === true;
+  const twoSidePanelsFit = useMediaQuery(TWO_SIDE_PANELS_FIT, true);
+  const sidebarAndPanelFit = useMediaQuery(SIDEBAR_AND_PANEL_FIT, true);
+  const sidebarAndNarrowPanelFit = useMediaQuery(SIDEBAR_AND_NARROW_PANEL_FIT, true);
+  const sidebarInline = useMediaQuery(SIDEBAR_INLINE, false);
   useEffect(() => {
-    fetch('http://localhost:3001/api/bots')
-      .then(res => res.json())
-      .then(data => {
-        if (data.bots) setBots(data.bots);
-      })
-      .catch(() => {
-        // Fallback demo bots if server is starting
-        setBots([
-          { id: 'chief', name: 'Chief of Staff', role: 'Chief of Staff', avatar: '👑', color: '#0EA5E9', description: 'Swarm coordinator and planner', systemPrompt: '', workspacePath: 'chief', toolsAllowed: [], preferredModel: 'claude_cli' },
-          { id: 'dev', name: 'DevBot', role: 'Full-Stack Engineer', avatar: '⚡', color: '#10B981', description: 'Full-stack builder and coder', systemPrompt: '', workspacePath: 'dev', toolsAllowed: [], preferredModel: 'codex_cli' },
-          { id: 'research', name: 'ResearchBot', role: 'Deep Researcher', avatar: '🔍', color: '#8B5CF6', description: 'Web scraper and technical investigator', systemPrompt: '', workspacePath: 'research', toolsAllowed: [], preferredModel: 'gemini_api' },
-          { id: 'design', name: 'DesignBot', role: 'UI/UX Designer', avatar: '🎨', color: '#F43F5E', description: 'Curved minimalist UI architect', systemPrompt: '', workspacePath: 'design', toolsAllowed: [], preferredModel: 'gemini_api' },
-          { id: 'review', name: 'ReviewBot', role: 'QA & Code Reviewer', avatar: '🛡️', color: '#F59E0B', description: 'Security and quality auditor', systemPrompt: '', workspacePath: 'review', toolsAllowed: [], preferredModel: 'ollama' },
-        ]);
-      });
-
-    fetch('http://localhost:3001/api/messages')
-      .then(res => res.json())
-      .then(data => {
-        if (data.messages && data.messages.length > 0) {
-          setMessages(data.messages);
-        } else {
-          // Default initial greeting
-          setMessages([
-            {
-              id: 'init_1',
-              senderId: 'chief',
-              senderName: 'Chief of Staff',
-              senderRole: 'Chief of Staff',
-              content: '👋 Welcome to **GrabBots**! I am your Chief of Staff. I coordinate your private team of autonomous bots—each with its own isolated virtual computer workspace and memory.\n\nYou can talk to the whole swarm or @mention specific specialists like `@DevBot`, `@ResearchBot`, `@DesignBot`, or `@ReviewBot`. What shall we build today?',
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            }
-          ]);
-        }
-      })
-      .catch(() => {});
-
-    fetch('http://localhost:3001/api/approvals')
-      .then(res => res.json())
-      .then(data => {
-        if (data.pending) setPendingApprovals(data.pending);
-      })
-      .catch(() => {});
-  }, []);
-
-  // Connect WebSocket stream
+    if (!sidebarInline && state.forkPanel) dispatch({ type: "closeForkPanel" });
+  }, [sidebarInline, state.forkPanel, dispatch]);
+  useRememberedSidePanel(state, dispatch, { enabled: sidebarInline, inspector: !remoteClient });
   useEffect(() => {
-    let ws: WebSocket;
-    try {
-      ws = new WebSocket('ws://localhost:3001');
-      ws.onmessage = (event) => {
-        try {
-          const { type, payload } = JSON.parse(event.data);
-          if (type === 'new_message') {
-            setMessages(prev => [...prev, payload]);
-            setIsSwarmThinking(false);
-          } else if (type === 'approval_required') {
-            setPendingApprovals(prev => [...prev, payload]);
-          } else if (type === 'bot_status') {
-            if (payload.status === 'thinking' || payload.status === 'executing_tool') {
-              setIsSwarmThinking(true);
-            } else {
-              setIsSwarmThinking(false);
-            }
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      };
-    } catch (e) {}
-
-    return () => {
-      if (ws) ws.close();
+    if (!window.ogb?.environments) return;
+    const open = (computerId?: string | null) => {
+      if (computerId) {
+        const target = new URL(window.location.href);
+        target.searchParams.set("share-computer", computerId);
+        window.history.replaceState(null, "", `${target.pathname}${target.search}${target.hash}`);
+      }
+      dispatch({ type: "toggleAppSettings", open: true, section: "desktopWorkspaces" });
     };
-  }, []);
-
-  // Scroll to bottom
+    const url = new URL(window.location.href);
+    const requestedSettings = url.searchParams.get("desktop-settings");
+    const cloud = ["cloud", "cloud-settings", "cloud-add", "cloud-add-howto"].includes(requestedSettings ?? "");
+    if (requestedSettings === "workspaces" || (requestedSettings === "organization" && window.ogb.organization && !remoteClient) ||
+      (cloud && window.ogb.cloudAccount && !remoteClient)) {
+      url.searchParams.delete("desktop-settings");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      if (requestedSettings === "organization") dispatch({ type: "toggleAppSettings", open: true, section: "organization" });
+      else if (requestedSettings === "cloud") dispatch(CLOUD_LINK_SETTINGS);
+      else if (requestedSettings === "cloud-settings") dispatch({ type: "toggleAppSettings", open: true, section: "cloudAccount" });
+      else if (requestedSettings === "cloud-add" || requestedSettings === "cloud-add-howto") dispatch({ type: "openCloudAdd", source: requestedSettings === "cloud-add" ? "app_menu" : "app_howto" });
+      else open();
+    }
+    return window.ogb.environments.onOpenSettings?.(open);
+  }, [dispatch]);
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, pendingApprovals]);
+    const rest = takePhonePairingRequest(window.location.href);
+    if (rest === null) return;
+    window.history.replaceState(null, "", rest);
+    dispatch(phonePairingSettingsAction());
+  }, [dispatch]);
+  useConnectLink(dispatch, Boolean(state.config?.team));
+  useExternalChatLinks(state, dispatch); useDesktopNotificationOpens(state, dispatch); useNewBotFromOtherPlace(state.hydrated === true, useCallback(() => dispatch({ type: "newBot" }), [dispatch]));
+  usePresence(state, dispatch); useTeamPresence(state);
+  usePageLanguage(effectiveLanguage(useLanguageChoice(), state.config?.language), true);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  // Stays mounted once opened: a Cloud bought in it can arrive after the sheet is closed.
+  const cloudAddOpened = useRef(false);
+  cloudAddOpened.current ||= Boolean(state.cloudAdd && cloudAccountBridge());
+  // A layout effect runs inside the tap that asked, so a browser lets it open a tab.
+  useLayoutEffect(() => {
+    if (!state.cloudAdd || cloudAccountBridge()) return;
+    openCloudOnWeb(state.cloudAdd, { cloudHome: state.config?.cloudHome === true, teamCloudPage: state.config?.team?.cloudPage });
+    dispatch({ type: "closeCloudAdd" });
+  }, [state.cloudAdd]);
+  const [localVmWorkspaceBotId, setLocalVmWorkspaceBotId] = useState<string | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const previousViewRef = useRef(state.activeView);
+  const calendarOriginRef = useRef<"chat" | "team-map" | "web-panel">("chat");
+  const loading = loadingLine({ connected: state.connected, hydrated: state.hydrated === true, developer: import.meta.env.DEV });
+  const group = state.groups.find((g) => g.id === state.selectedId);
+  const chiefStep = useChiefStepOpen();
+  const bot = group || chiefStep ? undefined : (state.bots.find((b) => b.id === state.selectedId) ?? state.bots[0]);
+  const chatBot = useMemo(() => bot && newChatBot(bot, state.newChat), [bot, state.newChat]);
+  const { open: drawerOpen, show: openDrawer, hide: hideDrawer, noteAction: noteDrawerAction } = useBotListDrawer({ selectedId: state.selectedId, botThread: chatBot?.threadId, groupThread: group?.threadId,
+    view: state.activeView, pluginsOpen: state.pluginsOpen, settingsOpen: state.settingsOpen });
+  const closeDrawer = useCallback(() => { hideDrawer(); menuButtonRef.current?.focus(); }, [hideDrawer]);
+  const notificationFeed = useNotificationFeed() && !remoteClient;
+  const advanced = useAdvancedMode();
+  const roomPanelOpen = useRoomPanelShown({ group, state, simple: !advanced && !remoteClient });
+  const sidePanels: OpenSidePanels = {
+    simple: !advanced, remoteClient, bot: Boolean(bot) && state.settingsOpen, room: roomPanelOpen, inbox: inboxShown, inboxWide: inboxPanel.wide === true,
+    notifications: notificationFeed && state.notificationsOpen,
+    wide: (Boolean(bot) && (state.computerOpen || state.inspectorOpen || state.activityOpen)) || Boolean(state.forkPanel),
+  };
+  // A 320 panel leaves room for the open sidebar from 1040 up; a wider one from 1280. Narrower, the sidebar folds.
+  const collapseSidebar = sidebarFoldsForPanel(sidePanels, { wide: sidebarAndPanelFit, narrow: sidebarAndNarrowPanelFit });
+  // Open beside a panel below 1280, the sidebar keeps to 280 so the chat keeps its 440.
+  const sidebarBesidePanel = anySidePanel(sidePanels) && !sidebarAndPanelFit;
+  const calendarFocus = state.activeView === "routines" && state.routinesFocus.view === "calendar";
+  const notificationTray = notificationFeed && !calendarFocus;
 
-  // Fetch workspace details on bot select
+  const noEngines =
+    state.connected &&
+    state.instances.length > 0 &&
+    !state.instances.some((i) => i.snapshot.state === "available");
+  const cloudSignIn = cloudSignInDue(viewer, state, engineReady);
+  const cloudIntent = useCloudIntent();
+  const cloudAsk = cloudIntentShown(cloudIntentDue({
+    viewer, connected: state.connected, enginesKnown: state.instances.length > 0,
+    onboarding: state.config?.onboarding, reopened: false,
+  }), cloudIntent);
+  const cloudJobWaiting = Boolean(viewer?.cloudHome && viewer.canSave && cloudIntent.pending);
+  const welcome = useCloudWelcome();
+  const welcomeOnScreen = cloudWelcomeVisible({ viewer, connected: state.connected, enginesKnown: state.instances.length > 0, onboarding: state.config?.onboarding }, welcome)
+    && state.activeView === "chat" && !(!remoteClient && localVmWorkspaceBotId);
+  const firstRun = cloudFirstRun({ welcome: welcomeOnScreen, intent: cloudAsk, signIn: cloudSignIn || cloudJobWaiting });
+  const team = state.config?.team ?? null;
+  const invited = invitedToTeam(viewer);
+  const teamWelcomeRecord = useTeamWelcomeRecord(team && invited ? team.id : null);
+  const teamWelcomeOn = teamWelcomeDue({ team, invited, record: teamWelcomeRecord }) && state.activeView === "chat";
+
   useEffect(() => {
-    if (selectedBot !== 'all') {
-      fetch(`http://localhost:3001/api/workspaces/${selectedBot}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.workspace) setBotWorkspaceInfo(data.workspace);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing || state.shortcutsOpen) return;
+      if (shouldOpenKeyboardShortcuts(e)) {
+        e.preventDefault();
+        dispatch({ type: "toggleShortcuts", open: true });
+        return;
+      }
+
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const bots = shortcutBots(state.bots.filter((b) => !b.hidden), shownBotIds(document.querySelector("[data-sidebar-root]")));
+      const step = e.shiftKey ? botCycleStep(e) : null;
+      if (e.key.toLowerCase() === "n" && !e.altKey) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          const selected = state.bots.find((bot) => bot.id === state.selectedId && !bot.hidden);
+          if (!e.repeat && selected && selected.yourAccess !== "view") dispatch({ type: "newTask", botId: selected.id });
+        } else {
+          dispatch({ type: "newBot" });
+        }
+      } else if (/^[1-9]$/.test(e.key)) {
+        const target = bots[Number(e.key) - 1];
+        if (target) {
+          e.preventDefault();
+          openBot(dispatch, target, showThreads);
+        }
+      } else if (step !== null) {
+        const next = nextShortcutBot(bots, state.selectedId, step);
+        if (next) {
+          e.preventDefault();
+          openBot(dispatch, next, showThreads);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state.bots, state.selectedId, state.shortcutsOpen, showThreads, dispatch]);
+
+  useReadShownChatOnFocus();
+  useEffect(() => {
+    if (window.ogb?.setUnreadCount) window.ogb.setUnreadCount(unreadCount);
+    else showBrowserUnread(unreadCount);
+  }, [unreadCount]);
+
+  useEffect(() => {
+    if (!state.connected) return;
+    void preloadConnectedApps(false, true).catch(() => {}); // a background read: a reconnect is nobody using a Cloud home
+  }, [state.connected]);
+  useUsageSnapshot();
+
+  useEffect(() => preloadScreens(), []);
+
+  useEffect(() => {
+    if (state.activeView === "routines" && previousViewRef.current !== "routines") {
+      calendarOriginRef.current = previousViewRef.current === "team-map" || previousViewRef.current === "web-panel" ? previousViewRef.current : "chat";
+    }
+    previousViewRef.current = state.activeView;
+  }, [state.activeView]);
+
+  useEffect(() => {
+    if (
+      localVmWorkspaceBotId &&
+      (state.activeView !== "chat" || state.selectedId !== localVmWorkspaceBotId)
+    ) {
+      setLocalVmWorkspaceBotId(null);
+    }
+  }, [localVmWorkspaceBotId, state.activeView, state.selectedId]);
+
+  const openLocalVmWorkspace = (botId: string) => {
+    dispatch({ type: "toggleComputer", open: false });
+    setLocalVmWorkspaceBotId(botId);
+  };
+
+  const openComputerFromWorkspace = (botId: string) => {
+    setLocalVmWorkspaceBotId(null);
+    dispatch({ type: "select", id: botId });
+    dispatch({ type: "toggleComputer", open: true });
+  };
+
+  const closeCalendar = useCallback(() => {
+    if (calendarOriginRef.current === "team-map") {
+      dispatch({ type: "showTeamMap" });
+      return;
+    }
+    if (calendarOriginRef.current === "web-panel" && state.webPanelId) {
+      dispatch({ type: "showWebPanel", id: state.webPanelId });
+      return;
+    }
+    dispatch({ type: "select", id: state.selectedId });
+  }, [dispatch, state.selectedId, state.webPanelId]);
+  const openCalendarRoom = useCallback((id: string) => {
+    dispatch({ type: "select", id });
+  }, [dispatch]);
+
+  const nativeViewOverlayOpen =
+    drawerOpen ||
+    paletteOpen ||
+    state.settingsOpen ||
+    state.computerOpen ||
+    state.inspectorOpen ||
+    state.activityOpen ||
+    state.appSettingsOpen ||
+    state.pluginsOpen;
+
+  useEffect(() => {
+    return window.ogb?.onOpenAppSettings?.(section => dispatch(section === "phone" ? phonePairingSettingsAction() : (section === "cloud-add" || section === "cloud-add-howto") && window.ogb?.cloudAccount && !remoteClient
+      ? { type: "openCloudAdd", source: section === "cloud-add" ? "app_menu" : "app_howto" }
+      : section === "cloud" && window.ogb?.cloudAccount && !remoteClient
+        ? CLOUD_LINK_SETTINGS
+        : section === "cloud-settings" && (window.ogb?.cloudAccount || window.ogb?.cloudPlan) && !remoteClient
+          ? { type: "toggleAppSettings", open: true, section: "cloudAccount" }
+          : { type: "toggleAppSettings", open: true, ...((section === "organization" && window.ogb?.organization && !remoteClient) || isSettingsPage(section) ? { section } : {}) }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    return window.ogb?.desktopViewer?.onState((viewer) => {
+      if (viewer.open || !viewer.contextId) return;
+      const botId = viewer.contextId, release = viewerClosedRelease(botId);
+      if (release) void serverFetch(`/api/bots/${botId}/computer/control`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(release),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((snap) => {
+          if (snap) dispatch({ type: "computerControl", botId, held: snap.held === true, helpReason: snap.helpReason ?? null, help: parseComputerHelp(snap.help) });
         })
         .catch(() => {});
-    }
-  }, [selectedBot]);
+      void serverFetch(`/api/bots/${botId}/computer/viewer-close`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      }).catch(() => {});
+    });
+  }, [dispatch]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!input.trim()) return;
-
-    const content = input.trim();
-    setInput('');
-    setIsSwarmThinking(true);
-
-    // Optimistically show user message
-    const tempUserMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
-      senderId: 'user',
-      senderName: 'You',
-      content,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setMessages(prev => [...prev, tempUserMsg]);
-
-    try {
-      await fetch('http://localhost:3001/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-    } catch (err) {
-      console.error(err);
-      setIsSwarmThinking(false);
-    }
-  };
-
-  const handleResolveApproval = async (requestId: string, decision: 'approve' | 'reject') => {
-    try {
-      await fetch(`http://localhost:3001/api/approvals/${requestId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision }),
-      });
-      setPendingApprovals(prev => prev.filter(req => req.id !== requestId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const appendMention = (mentionTag: string) => {
-    setInput(prev => `${prev} ${mentionTag} `.trimStart());
-  };
-
+  const framed = windowFramed(capabilities);
+  // The sidebar is on screen, so its update button is too. In Simple that button is the one; the top bar leaves its own out.
+  const sidebarShown = !calendarFocus && (sidebarInline || drawerOpen);
+  const strips = <>
+    <UpdateBanner sidebarIndicator={framed || sidebarShown} />
+    <CloudAsleepStrip />
+    <LiveConnectionStrip connected={state.connected} hydrated={state.hydrated === true} />
+    <CloudSendStrip cloudHome={state.config?.cloudHome === true} />
+    <HomeLine />
+    <AppNotices quiet={paletteOpen || drawerOpen || Boolean(localVmWorkspaceBotId)} viewer={viewer} />
+    <CliLoginCard />
+  </>;
   return (
-    <div className="flex h-screen w-screen bg-[#0B0D11] text-gray-200 overflow-hidden font-sans">
-      {/* LEFT SIDEBAR: Bot Swarm Roster */}
-      <aside className="w-80 border-r border-[#1E2536] bg-[#0E1118]/80 backdrop-blur-md flex flex-col justify-between p-4 shrink-0">
-        <div className="space-y-4">
-          {/* Logo & Brand Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#1E2536]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-glow-cyan">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-base tracking-tight text-white flex items-center gap-1.5">
-                  GrabBots
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">v0.1</span>
-                </h1>
-                <p className="text-xs text-gray-400 font-light">Grok Bot Alternative</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live
-            </div>
-          </div>
-
-          {/* Swarm Roster */}
-          <div>
-            <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400">Agent Team</span>
-              <span className="text-[11px] font-mono text-gray-500">{bots.length} active</span>
-            </div>
-
-            <div className="space-y-1.5">
-              <button
-                onClick={() => setSelectedBot('all')}
-                className={`w-full text-left p-2.5 rounded-2xl transition-all flex items-center justify-between ${
-                  selectedBot === 'all' 
-                    ? 'bg-cyan-500/10 border border-cyan-500/30 text-white' 
-                    : 'hover:bg-white/5 text-gray-300 border border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-lg">🌐</span>
-                  <div>
-                    <div className="text-sm font-medium">All Bots (Group Chat)</div>
-                    <div className="text-xs text-gray-400 font-light">Shared Swarm Feed</div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-500" />
-              </button>
-
-              {bots.map(bot => (
-                <button
-                  key={bot.id}
-                  onClick={() => setSelectedBot(bot.id)}
-                  className={`w-full text-left p-2.5 rounded-2xl transition-all flex items-center justify-between group ${
-                    selectedBot === bot.id 
-                      ? 'bg-white/10 border border-white/20 text-white' 
-                      : 'hover:bg-white/5 text-gray-300 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#1A202C] flex items-center justify-center text-base border border-white/10">
-                      {bot.avatar}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium flex items-center gap-1.5">
-                        {bot.name}
-                        {bot.id === 'chief' && (
-                          <span className="text-[9px] px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 font-mono">Lead</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-400 font-light truncate max-w-[150px]">{bot.role}</div>
-                    </div>
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400/80"></div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom BYOS Status Card */}
-        <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-300 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              BYOS Bridge
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-              Ready
-            </span>
-          </div>
-          <p className="text-[11px] text-gray-400 font-light leading-relaxed">
-            Running on your existing Claude Pro & ChatGPT Plus subscriptions. $0 per-token billing.
-          </p>
-        </div>
-      </aside>
-
-      {/* CENTER: Multi-Agent Group Chat */}
-      <main className="flex-1 flex flex-col h-full bg-[#0B0D11] relative">
-        {/* Top Header Pill Bar */}
-        <header className="h-16 border-b border-[#1E2536] px-6 flex items-center justify-between bg-[#0B0D11]/80 backdrop-blur-md z-10">
-          <div className="flex items-center gap-3">
-            <div className="text-sm font-medium text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-cyan-400" />
-              {selectedBot === 'all' ? 'Team Channel #general' : `@${bots.find(b => b.id === selectedBot)?.name}`}
-            </div>
-            <span className="text-xs text-gray-500">•</span>
-            <div className="text-xs text-gray-400 flex items-center gap-2 font-light">
-              <span>Isolated Workspaces: <code className="font-mono text-cyan-300">~/.grabbots/workspaces/</code></span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {pendingApprovals.length > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono animate-pulse">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                {pendingApprovals.length} Approval Pending
-              </div>
-            )}
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#141824] border border-[#1E2536] text-xs font-mono text-gray-300">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              HITL Policy Active
-            </div>
-          </div>
-        </header>
-
-        {/* Message Feed */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {messages.map((msg) => {
-            const isUser = msg.senderId === 'user';
-            const botMeta = bots.find(b => b.id === msg.senderId);
-
-            return (
-              <div 
-                key={msg.id} 
-                className={`flex gap-3.5 max-w-3xl ${isUser ? 'ml-auto flex-row-reverse' : ''}`}
-              >
-                {!isUser ? (
-                  <div className="w-9 h-9 rounded-2xl bg-[#141824] border border-[#242D40] flex items-center justify-center text-lg shrink-0 shadow-sm">
-                    {botMeta?.avatar || '🤖'}
-                  </div>
-                ) : (
-                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-700 flex items-center justify-center text-sm font-medium text-white shrink-0 shadow-sm">
-                    U
-                  </div>
-                )}
-
-                <div className={`space-y-1.5 max-w-[85%] ${isUser ? 'items-end' : ''}`}>
-                  <div className={`flex items-center gap-2 text-xs ${isUser ? 'justify-end' : ''}`}>
-                    <span className="font-medium text-gray-300">{msg.senderName}</span>
-                    {msg.senderRole && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-white/5 text-gray-400 border border-white/10">
-                        {msg.senderRole}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-gray-500 font-mono">{msg.timestamp}</span>
-                  </div>
-
-                  <div 
-                    className={`p-4 rounded-3xl text-sm leading-relaxed ${
-                      isUser 
-                        ? 'bg-cyan-600 text-white rounded-tr-sm shadow-glow-cyan' 
-                        : 'bg-[#121622] border border-[#1E2536] text-gray-200 rounded-tl-sm'
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap font-normal">
-                      {msg.content}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Pending HITL Approvals Cards */}
-          {pendingApprovals.map(req => (
-            <div key={req.id} className="p-4 rounded-3xl bg-amber-500/10 border border-amber-500/30 max-w-2xl mx-auto space-y-3 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm font-semibold text-amber-200">Human-in-the-Loop Approval Required</span>
-                </div>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  {req.riskLevel} Risk
-                </span>
-              </div>
-
-              <div className="text-xs text-gray-300">
-                <span className="font-medium text-white">{req.agentName}</span> is requesting to execute:
-              </div>
-
-              <div className="p-3 rounded-2xl bg-black/40 border border-white/10 font-mono text-xs text-amber-300 overflow-x-auto">
-                <code>{req.commandOrAction}</code>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  onClick={() => handleResolveApproval(req.id, 'reject')}
-                  className="px-3.5 py-1.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium transition-all flex items-center gap-1.5"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  Reject
-                </button>
-                <button
-                  onClick={() => handleResolveApproval(req.id, 'approve')}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-all shadow-md flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Approve & Execute
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Thinking Indicator */}
-          {isSwarmThinking && (
-            <div className="flex items-center gap-2.5 text-xs text-cyan-400 font-mono animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-              <span>Swarm coordinating turns & running tool pipeline...</span>
+    <div data-look="app" className={cn("flex h-full flex-col", framed && "bg-frame")} onClickCapture={drawerOpen ? noteDrawerAction : undefined} onKeyDownCapture={drawerOpen ? noteDrawerAction : undefined}>
+      <WindowFrameBar notifications={notificationTray} sidebarUpdate={!advanced && sidebarShown} />
+      <BotLimitPopup />
+      <ConversationShareDialogs />
+      {!framed && strips}
+      <div className="relative flex min-h-0 flex-1">
+      {!calendarFocus && <button
+        type="button"
+        ref={menuButtonRef}
+        aria-label={t("app.openBotList")}
+        aria-expanded={drawerOpen}
+        onClick={openDrawer}
+        className="absolute left-3 top-3 z-30 rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink max-md:flex max-md:size-9 max-md:items-center max-md:justify-center max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card max-md:p-0 max-md:text-ink md:hidden"
+      >
+        <Menu size={18} className="max-md:hidden" />
+        <ChevronLeft size={20} aria-hidden="true" className="hidden max-md:block" />
+      </button>}
+      {drawerOpen && !calendarFocus && (
+        <div
+          aria-hidden
+          onMouseDown={(e) => e.target === e.currentTarget && hideDrawer()}
+          className="absolute inset-0 z-30 bg-black/50 md:hidden"
+        />
+      )}
+      {!calendarFocus && <PlacesRail />}
+      <NewLocalFromMenu />
+        <div
+          data-window-card={framed ? "" : undefined}
+          className={framed ? "relative flex min-w-0 flex-1 flex-col overflow-hidden bg-app" : "contents"}
+        >
+        {framed && strips}
+        <div className={framed ? "relative flex min-h-0 flex-1" : "contents"}>
+      {!calendarFocus && <Sidebar
+        collapseToIcons={collapseSidebar}
+        besidePanel={sidebarBesidePanel}
+        open={drawerOpen}
+        onClose={closeDrawer}
+      />}
+      {state.activeView === "overview" ? (
+        <GrabBotsOverviewPage />
+      ) : state.activeView === "team-map" ? (
+        <TeamMapPage />
+      ) : state.activeView === "files" ? (
+        <FilesView />
+      ) : state.activeView === "web-panel" ? (
+        <WebPanelPage />
+      ) : state.activeView === "published-apps" ? (
+        <PublishedAppsPage />
+      ) : state.activeView === "announcements" ? (
+        <AnnouncementsPage />
+      ) : state.activeView === "team-files" && state.config?.team ? (
+        <TeamFilesPage />
+      ) : state.activeView === "routines" ? (
+        <TriggersPage onBack={closeCalendar} onOpenRoom={openCalendarRoom} />
+      ) : !remoteClient && localVmWorkspaceBotId ? (
+        <LocalVmWorkspace
+          primaryBotId={localVmWorkspaceBotId}
+          overlayOpen={nativeViewOverlayOpen}
+          onClose={() => setLocalVmWorkspaceBotId(null)}
+          onOpenComputer={openComputerFromWorkspace}
+        />
+      ) : teamWelcomeOn && team ? (
+        <TeamWelcome team={team} invitedBy={teamWelcomeRecord?.invitedBy ?? null} />
+      ) : firstRun === "welcome" ? (
+        <CloudWelcome />
+      ) : firstRun === "intent" ? (
+        <CloudIntent />
+      ) : firstRun === "sign-in" ? (
+        <CloudEngineSignIn />
+      ) : chiefStep ? (
+        <EmptyChatShell />
+      ) : group ? (
+        <GroupView key={group.id} group={group} />
+      ) : bot ? (
+        <HandoffExchangeHost bot={chatBot ?? bot}><ChatView bot={chatBot ?? bot} /></HandoffExchangeHost>
+      ) : noEngines ? (
+        <NoEngines />
+      ) : (
+        <main data-app-loading={loading.text} className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-3 bg-app text-ink-secondary">
+          <WindowDragStrip />
+          <div className="w-full max-w-md"><ChatNotice notice={state.notice} /></div>
+          {loading.busy && <Loader2 size={20} className="animate-spin" />}
+          <div className="text-[14px]">{t(loading.text)}</div>
+          {loading.command && (
+            <div className="text-[12px]">
+            {t("app.loading.startServer")} <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
             </div>
           )}
-
-          <div ref={chatBottomRef} />
-        </div>
-
-        {/* Input Bar & Mentions Bar */}
-        <div className="p-4 border-t border-[#1E2536] bg-[#0B0D11] space-y-2.5">
-          {/* Quick Mention Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <span className="text-[11px] font-mono text-gray-500 mr-1">Tag Specialist:</span>
-            {bots.map(bot => (
-              <button
-                key={bot.id}
-                onClick={() => appendMention(`@${bot.name.replace(/\s+/g, '')}`)}
-                className="px-2.5 py-1 rounded-full bg-[#141824] hover:bg-[#1E2536] border border-[#242D40] text-gray-300 hover:text-white transition-all flex items-center gap-1 shrink-0 font-mono text-[11px]"
-              >
-                <span>{bot.avatar}</span>
-                <span>@{bot.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Main Input Form */}
-          <form onSubmit={handleSendMessage} className="relative flex items-center">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Chief of Staff or tag @DevBot, @ResearchBot, @DesignBot..."
-              className="w-full bg-[#121622] border border-[#1E2536] focus:border-cyan-500/50 rounded-3xl py-3.5 pl-5 pr-14 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-all font-light"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              className="absolute right-2.5 w-9 h-9 rounded-2xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 disabled:hover:bg-cyan-600 text-white flex items-center justify-center transition-all shadow-glow-cyan"
-            >
-              <CornerDownLeft className="w-4 h-4" />
-            </button>
-          </form>
-        </div>
-      </main>
-
-      {/* RIGHT PANEL: Bot Computer Inspector */}
-      <aside className="w-80 border-l border-[#1E2536] bg-[#0E1118]/80 backdrop-blur-md flex flex-col p-4 shrink-0 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-[#1E2536]">
-          <span className="text-sm font-medium text-white flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-cyan-400" />
-            Bot Computer
-          </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10">
-            Sandbox
-          </span>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="flex rounded-2xl bg-[#121622] p-1 border border-[#1E2536] text-xs font-medium">
-          <button
-            onClick={() => setActiveInspectorTab('workspace')}
-            className={`flex-1 py-1.5 rounded-xl transition-all ${
-              activeInspectorTab === 'workspace' ? 'bg-cyan-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Workspace
-          </button>
-          <button
-            onClick={() => setActiveInspectorTab('terminal')}
-            className={`flex-1 py-1.5 rounded-xl transition-all ${
-              activeInspectorTab === 'terminal' ? 'bg-cyan-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Terminal
-          </button>
-          <button
-            onClick={() => setActiveInspectorTab('byos')}
-            className={`flex-1 py-1.5 rounded-xl transition-all ${
-              activeInspectorTab === 'byos' ? 'bg-cyan-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            BYOS Models
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto space-y-3">
-          {activeInspectorTab === 'workspace' && (
-            <div className="space-y-3">
-              <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-1.5">
-                <div className="text-[11px] font-mono text-gray-400 uppercase">Dedicated Directory</div>
-                <div className="text-xs font-mono text-cyan-300 break-all bg-black/30 p-2 rounded-xl">
-                  {botWorkspaceInfo?.directory || `~/.grabbots/workspaces/${selectedBot === 'all' ? 'chief' : selectedBot}`}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-2">
-                <div className="text-[11px] font-mono text-gray-400 uppercase">Isolated Files</div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-gray-300 p-1.5 rounded-lg hover:bg-white/5">
-                    <FolderGit2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>WORKSPACE.md</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-300 p-1.5 rounded-lg hover:bg-white/5">
-                    <FolderGit2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>scratch/</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-300 p-1.5 rounded-lg hover:bg-white/5">
-                    <FolderGit2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>output/</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeInspectorTab === 'terminal' && (
-            <div className="p-3 rounded-2xl bg-black border border-[#1E2536] font-mono text-xs text-emerald-400 space-y-2 h-64 overflow-y-auto">
-              <div className="text-gray-500 text-[10px]">[GrabBots PTY Kernel Ready]</div>
-              <div>$ pnpm dev:all</div>
-              <div className="text-gray-400">[Express] Port 3001 online</div>
-              <div className="text-gray-400">[WebSocket] ws://localhost:3001 attached</div>
-              <div className="text-cyan-400">[Swarm] 5 isolated bot computers online</div>
-              <div className="text-gray-500 animate-pulse">_</div>
-            </div>
-          )}
-
-          {activeInspectorTab === 'byos' && (
-            <div className="space-y-2.5">
-              <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-white">Claude Code CLI</span>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Connected</span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-light">Claude 3.7 Sonnet (Claude Pro Subscription)</p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-white">Codex CLI</span>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Connected</span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-light">GPT-4o (ChatGPT Plus Subscription)</p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-[#121622] border border-[#1E2536] space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-white">Ollama Local</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-1.5 py-0.5 rounded">Local Standby</span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-light">qwen2.5-coder:14b / llama3.3:70b</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer info */}
-        <div className="pt-2 border-t border-[#1E2536] text-[10px] text-gray-500 text-center font-mono">
-          Local-first • Private • Isolated Workspaces
-        </div>
-      </aside>
+        </main>
+      )}
+      {/* Sibling panels need distinct keys: two keyed `bot.id` collide in React's keyed reconciliation. */}
+      {state.settingsOpen && bot && (
+        remoteClient
+          ? <RemoteAgentSettingsPanel bot={bot} overlay={state.computerOpen && !twoSidePanelsFit} />
+          : <BotSettingsDialog key={`settings:${bot.id}`} bot={bot} overlay={(state.inspectorOpen || state.computerOpen || (notificationFeed && state.notificationsOpen)) && !twoSidePanelsFit} />
+      )}
+      {state.computerOpen && bot && (
+        remoteClient ? (
+          <RemoteDesktopPanel key={`computer:${bot.id}`} bot={bot} />
+        ) : (
+          <ComputerPanel
+            key={`computer:${bot.id}`}
+            bot={bot}
+            onOpenVmWorkspace={openLocalVmWorkspace}
+          />
+        )
+      )}
+      <AppPreviewPanel />
+      <FilePreviewPanel threadId={group?.threadId ?? bot?.threadId} />
+      {state.forkPanel && sidebarInline && <ForkPanel />}
+      {!state.forkPanel && roomPanelOpen && group && (
+        <RoomPanel key={`room:${group.id}`} group={group} overlay={notificationFeed && state.notificationsOpen && !twoSidePanelsFit} />
+      )}
+      {!remoteClient && !state.forkPanel && state.inspectorOpen && bot && <InspectorPanel key={bot.threadId} bot={bot} />}
+      {!remoteClient && state.activityOpen && bot && <ActivityPanel key={`activity:${bot.id}`} bot={bot} />}
+      {inboxShown && <InboxPanel />}
+      {notificationTray && state.notificationsOpen && <NotificationsPanel />}
+      {notificationTray && !framed && <NotificationRail />}
+      </div>
+      </div>
+      </div>
+      {state.appSettingsOpen && <SettingsModal />}
+      {cloudAddOpened.current && <CloudAddDialog />}
+      <CloudHowTo />
+      <CloudSetup viewer={viewer} welcomeShown={welcomeOnScreen} />
+      <WelcomeKeeper viewer={viewer} />
+      {state.pluginsOpen && (team && viewer?.canSave === false ? <MemberApps /> : <PluginsPanel />)}
+      <AppGrantNotice />
+      {state.shortcutsOpen && (
+        <KeyboardShortcutsModal
+          open={state.shortcutsOpen}
+          onClose={() => dispatch({ type: "toggleShortcuts", open: false })}
+        />
+      )}
+      {/* After the modals: same z-50 tier, so DOM order keeps the palette on top. */}
+      <CommandPalette onOpenChange={setPaletteOpen} />
+      {/* Blink resolves -webkit-app-region in DOM order, so this no-drag twin after the headers cuts the drawer button back out. */}
+      {!calendarFocus && <span
+        aria-hidden
+        data-drawer-button-no-drag
+        style={captionChrome.noDragStyle}
+        className="pointer-events-none absolute left-3 top-3 size-[30px] md:hidden"
+      />}
+      {/* Last child on purpose: Blink resolves -webkit-app-region in DOM order, so no-drag buttons must follow every drag region. */}
+      <WindowCaptionButtons
+        visible={capabilities.windowChrome === "win-caption" && Boolean(window.ogb?.windowControls)}
+      />
     </div>
   );
+}
+
+function AppLoadSignal() {
+  useAppLoadSignal();
+  return null;
+}
+
+function WorkspaceOnboardingOverlays({ viewer }: { viewer: WelcomeViewer | null }) {
+  const { state } = useStore();
+  if (state.activeView !== "chat" && !state.welcomeOpen) return null;
+  return (
+    <>
+      <WelcomeGate viewer={viewer} />
+      <MausBotWelcome viewer={viewer} />
+      <GuidedTour />
+      <FirstConversationTour quiet={spotlightsQuiet(viewer)} />
+    </>
+  );
+}
+
+function Application() {
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+  const viewer = useWelcomeViewer();
+  return (
+    <DesktopCapabilitiesProvider>
+      <StoreProvider>
+        <AppLoadSignal />
+        <ThreadRefsProvider>
+          <Shell viewer={viewer} />
+        </ThreadRefsProvider>
+        <WorkspaceOnboardingOverlays viewer={viewer} />
+        <NewBotNameHost />
+        <CloudTimeZoneSync viewer={viewer} />
+        <LiveCallHost />
+      </StoreProvider>
+    </DesktopCapabilitiesProvider>
+  );
+}
+
+export default function App() {
+  const ended = useSessionEnded();
+  if (ended) return <PairPage initialCode={null} reason={t("pair.sessionEnded")} />;
+  return <WorkspaceBackupRecovery><Application /></WorkspaceBackupRecovery>;
 }

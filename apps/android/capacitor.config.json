@@ -1,0 +1,13 @@
+{
+  "appId": "com.grabbots.app",
+  "appName": "GrabBots",
+  "webDir": "../../dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#070707"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
