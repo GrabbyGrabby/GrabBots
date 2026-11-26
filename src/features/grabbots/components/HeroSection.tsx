@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Download, MessageSquare, Monitor, Smartphone, Terminal } from "lucide-react";
+import { ArrowRight, Download, MessageSquare, Monitor } from "lucide-react";
 
 import { InteractiveBotAvatar } from "@/components/InteractiveBotAvatar";
 import { cn } from "@/lib/cn";
@@ -69,62 +69,53 @@ export function HeroSection({ onOpenChat, onJumpToDownloads, botIdsAvailable }: 
     >
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-hairline/50 bg-panel px-3 py-1 text-[12px] font-medium text-ink-secondary">
-            <img src="/app-icon.svg" alt="" width={16} height={16} className="size-4 rounded-[4px] object-contain" />
-            <span>GrabBots</span>
-          </div>
-
           <h1
             id="grabbots-hero-title"
-            className="mt-4 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]"
+            className="mt-2 text-[36px] font-semibold lowercase leading-[1.05] tracking-[-0.03em] text-ink sm:text-[48px]"
           >
-            Your autonomous AI squad, running locally on your machine.
+            download
+            <br />
+            grabbots
           </h1>
 
-          <p className="mt-3 text-[14px] leading-relaxed text-ink-secondary">
-            Zeus, Kraken, Knull, and Xerxes share context, execute real tools, and keep your data on your device.
+          <p className="mt-4 max-w-md text-[14px] leading-relaxed text-ink-secondary">
+            open it, sign in to the ai you already use or start on the free models, and your first bot is working a couple of minutes later. free for personal use, no account needed.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => onOpenChat()}
-              className="ui-button ui-button-primary ui-button-pill gap-2 px-4 py-2"
-            >
-              <MessageSquare size={15} aria-hidden="true" />
-              <span>Open Squad Chat</span>
-              <ArrowRight size={14} aria-hidden="true" />
-            </button>
-
-            <button
-              type="button"
               onClick={onJumpToDownloads}
-              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
+              className="ui-button ui-button-primary ui-button-pill gap-2 px-5 py-2.5 text-[13px] lowercase"
             >
               <Monitor size={14} aria-hidden="true" />
-              <span>Windows</span>
-              <Download size={13} aria-hidden="true" />
+              <span>download for windows</span>
             </button>
 
             <button
               type="button"
               onClick={onJumpToDownloads}
-              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
+              className="ui-button ui-button-pill gap-2 px-4 py-2.5 text-[13px] lowercase"
             >
-              <Terminal size={14} aria-hidden="true" />
-              <span>Linux</span>
-              <Download size={13} aria-hidden="true" />
+              <Download size={14} aria-hidden="true" />
+              <span>all downloads</span>
             </button>
 
             <button
               type="button"
-              onClick={onJumpToDownloads}
-              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
+              onClick={() => onOpenChat()}
+              className="ui-button ui-button-pill gap-2 px-4 py-2.5 text-[13px] lowercase"
             >
-              <Smartphone size={14} aria-hidden="true" />
-              <span>Android APK</span>
-              <Download size={13} aria-hidden="true" />
+              <MessageSquare size={14} aria-hidden="true" />
+              <span>open squad chat</span>
+              <ArrowRight size={13} aria-hidden="true" />
             </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-ink-tertiary">
+            <span>windows 10 and 11 · linux · android apk</span>
+            <span>·</span>
+            <span>version 0.1.177</span>
           </div>
         </div>
 

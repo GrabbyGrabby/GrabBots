@@ -132,10 +132,9 @@ describe("GrabBots overview & integrations", () => {
     act(() => root.render(createElement(HeroSection, { onOpenChat })));
     const text = host.textContent ?? "";
     for (const name of ["Zeus", "Kraken", "Knull", "Xerxes"]) expect(text).toContain(name);
-    expect(text).toContain("Open Squad Chat");
-    expect(text).toContain("Windows");
-    expect(text).toContain("Linux");
-    expect(text).toContain("Android APK");
+    expect(text).toContain("open squad chat");
+    expect(text).toContain("download for windows");
+    expect(text).toContain("all downloads");
     expect(text).not.toMatch(/OpenMausBot|MausBot|DuskBot|—/);
     expect(host.querySelectorAll("[data-open-avatar]")).toHaveLength(4);
   });
