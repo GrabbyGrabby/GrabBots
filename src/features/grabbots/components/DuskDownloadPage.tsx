@@ -77,21 +77,21 @@ export function DuskDownloadPage() {
               <a
                 href={`/api/grabbots/downloads/file/${encodeURIComponent(winArtifact.fileName)}`}
                 download={winArtifact.fileName}
-                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline hover:bg-[#2a2a30]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline transition-[transform,background-color] duration-150 ease-out hover:bg-[#2a2a30] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 Download for Windows
               </a>
             ) : (
               <a
                 href="#all"
-                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline hover:bg-[#2a2a30]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline transition-[transform,background-color] duration-150 ease-out hover:bg-[#2a2a30] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 Download for Windows
               </a>
             )}
             <a
               href="#all"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#efefed] px-6 text-[16px] font-medium text-[#131316] no-underline hover:bg-[#e4e4e1]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#efefed] px-6 text-[16px] font-medium text-[#131316] no-underline transition-[transform,background-color] duration-150 ease-out hover:bg-[#e4e4e1] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             >
               All downloads
             </a>
@@ -108,7 +108,7 @@ export function DuskDownloadPage() {
               href="/"
               onMouseEnter={() => setHovered(bot.id)}
               onMouseLeave={() => setHovered((prev) => (prev === bot.id ? null : prev))}
-              className="flex items-center gap-3.5 rounded-[20px] bg-[#f5f5f3] p-4 text-[#131316] no-underline transition-colors hover:bg-[#ecece8]"
+              className="flex items-center gap-3.5 rounded-[20px] bg-[#f5f5f3] p-4 text-[#131316] no-underline transition-[transform,background-color] duration-150 ease-out hover:bg-[#ecece8] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             >
               <InteractiveBotAvatar
                 type={bot.type}
