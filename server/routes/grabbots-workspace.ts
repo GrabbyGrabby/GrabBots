@@ -1,5 +1,5 @@
-import { existsSync, lstatSync, readdirSync, realpathSync, statSync, type Dirent } from "node:fs";
-import { extname, isAbsolute, join, relative, resolve } from "node:path";
+import { createReadStream, existsSync, lstatSync, readdirSync, realpathSync, statSync, type Dirent } from "node:fs";
+import { basename, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getGrabBotsDownloads } from "../grabbots-downloads.ts";
@@ -399,6 +399,28 @@ export function createGrabBotsWorkspaceRoutes(deps: GrabBotsWorkspaceDeps = {}):
       };
 
       return json(res, 200, payload);
+    }
+
+    if (method === "GET" && pathname.startsWith("/api/grabbots/downloads/file/")) {
+      const requested = decodeURIComponent(pathname.slice("/api/grabbots/downloads/file/".length));
+      const fileName = basename(requested);
+      if (!fileName || fileName !== requested || fileName.includes("..")) {
+        return json(res, 400, { error: "Invalid file name" });
+      }
+      const releaseDir = join(repoRoot, "release");
+      const filePath = join(releaseDir, fileName);
+      if (!existsSync(filePath) || !statSync(filePath).isFile()) {
+        return json(res, 404, { error: "Release artifact not found" });
+      }
+      const stat = statSync(filePath);
+      res.writeHead(200, {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": String(stat.size),
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Cache-Control": "no-store",
+      });
+      createReadStream(filePath).pipe(res);
+      return;
     }
 
     return PASS;
