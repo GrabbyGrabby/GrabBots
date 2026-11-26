@@ -30,6 +30,10 @@ export function GrabBotsOverviewPage() {
     dispatch({ type: "showChat" });
   };
 
+  const openProviders = () => {
+    dispatch({ type: "toggleAppSettings", open: true, section: "engines" });
+  };
+
   const openFiles = () => {
     dispatch({ type: "showFiles" });
   };
