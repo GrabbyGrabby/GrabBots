@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, LogIn, MessageSquare } from "lucide-react";
+import { ArrowRight, Download, MessageSquare, Monitor, Smartphone, Terminal } from "lucide-react";
 
 import { InteractiveBotAvatar } from "@/components/InteractiveBotAvatar";
 import { cn } from "@/lib/cn";
@@ -55,10 +55,11 @@ export const GRABBOTS_HERO_BOTS: readonly SquadHeroBot[] = [
 
 export interface HeroSectionProps {
   onOpenChat: (botId?: string) => void;
+  onJumpToDownloads?: () => void;
   botIdsAvailable?: ReadonlySet<string>;
 }
 
-export function HeroSection({ onOpenChat, botIdsAvailable }: HeroSectionProps) {
+export function HeroSection({ onOpenChat, onJumpToDownloads, botIdsAvailable }: HeroSectionProps) {
   const [hoveredBotId, setHoveredBotId] = useState<string | null>(null);
 
   return (
@@ -70,18 +71,18 @@ export function HeroSection({ onOpenChat, botIdsAvailable }: HeroSectionProps) {
         <div className="max-w-xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-hairline/50 bg-panel px-3 py-1 text-[12px] font-medium text-ink-secondary">
             <img src="/app-icon.svg" alt="" width={16} height={16} className="size-4 rounded-[4px] object-contain" />
-            <span>GrabBots Squad Studio</span>
+            <span>GrabBots</span>
           </div>
 
           <h1
             id="grabbots-hero-title"
             className="mt-4 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]"
           >
-            Four focused bots working in one local-first hub.
+            Your autonomous AI squad, running locally on your machine.
           </h1>
 
           <p className="mt-3 text-[14px] leading-relaxed text-ink-secondary">
-            Zeus, Kraken, Knull, and Xerxes share context, run tools on your machine, and connect to the AI providers you already use. Hover a bot to say hello or jump straight into chat.
+            Zeus, Kraken, Knull, and Xerxes share context, execute real tools, and keep your data on your device.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-2.5">
@@ -95,13 +96,35 @@ export function HeroSection({ onOpenChat, botIdsAvailable }: HeroSectionProps) {
               <ArrowRight size={14} aria-hidden="true" />
             </button>
 
-            <a
-              href="/pair"
-              className="ui-button ui-button-pill gap-2 px-4 py-2 no-underline"
+            <button
+              type="button"
+              onClick={onJumpToDownloads}
+              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
             >
-              <LogIn size={15} aria-hidden="true" />
-              <span>Sign in / Pair</span>
-            </a>
+              <Monitor size={14} aria-hidden="true" />
+              <span>Windows</span>
+              <Download size={13} aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onJumpToDownloads}
+              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
+            >
+              <Terminal size={14} aria-hidden="true" />
+              <span>Linux</span>
+              <Download size={13} aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onJumpToDownloads}
+              className="ui-button ui-button-pill gap-2 px-3.5 py-2"
+            >
+              <Smartphone size={14} aria-hidden="true" />
+              <span>Android APK</span>
+              <Download size={13} aria-hidden="true" />
+            </button>
           </div>
         </div>
 

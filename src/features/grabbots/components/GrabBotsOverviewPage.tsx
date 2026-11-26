@@ -30,16 +30,12 @@ export function GrabBotsOverviewPage() {
     dispatch({ type: "showChat" });
   };
 
-  const openProviders = () => {
-    dispatch({ type: "toggleAppSettings", open: true, section: "engines" });
-  };
-
   const openFiles = () => {
     dispatch({ type: "showFiles" });
   };
 
-  const scrollToProviders = () => {
-    const target = scrollRef.current?.querySelector("#grabbots-providers-hub");
+  const jumpToDownloads = () => {
+    const target = scrollRef.current?.querySelector("#grabbots-downloads-hub");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -85,6 +81,7 @@ export function GrabBotsOverviewPage() {
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-6">
           <HeroSection
             onOpenChat={openSquadChat}
+            onJumpToDownloads={jumpToDownloads}
             botIdsAvailable={botIdsAvailable.size > 0 ? botIdsAvailable : undefined}
           />
 
