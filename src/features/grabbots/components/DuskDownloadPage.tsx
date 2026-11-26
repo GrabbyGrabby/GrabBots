@@ -40,6 +40,7 @@ export function DuskDownloadPage() {
   }, []);
 
   const version = data?.version ?? "0.1.177";
+  const winArtifact = data?.platforms?.windows?.artifacts?.find((a) => a.fileName.endsWith(".zip")) ?? data?.platforms?.windows?.artifacts?.[0];
 
   return (
     <div className="h-screen overflow-y-auto bg-white text-[#131316]" style={{ fontFamily: '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
@@ -72,10 +73,10 @@ export function DuskDownloadPage() {
             Open it, sign in to the AI you already use or start on the free models, and your first bot is working a couple of minutes later. Free for personal use, no account needed.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-2.5">
-            {data?.platforms?.windows?.available && data.platforms.windows.artifacts?.[0] ? (
+            {data?.platforms?.windows?.available && winArtifact ? (
               <a
-                href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.windows.artifacts[0].fileName)}`}
-                download={data.platforms.windows.artifacts[0].fileName}
+                href={`/api/grabbots/downloads/file/${encodeURIComponent(winArtifact.fileName)}`}
+                download={winArtifact.fileName}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline hover:bg-[#2a2a30]"
               >
                 Download for Windows
@@ -139,10 +140,10 @@ export function DuskDownloadPage() {
                 <b className="text-[16px] font-medium text-[#131316]">Windows</b>
                 <span className="ml-2 text-[14px] text-[#55555f]">x64 · Installer .exe</span>
               </div>
-              {data?.platforms?.windows?.available && data.platforms.windows.artifacts?.[0] ? (
+              {data?.platforms?.windows?.available && winArtifact ? (
                 <a
-                  href={`/api/grabbots/downloads/file/${encodeURIComponent(data.platforms.windows.artifacts[0].fileName)}`}
-                  download={data.platforms.windows.artifacts[0].fileName}
+                  href={`/api/grabbots/downloads/file/${encodeURIComponent(winArtifact.fileName)}`}
+                  download={winArtifact.fileName}
                   className="inline-flex min-h-[40px] items-center rounded-full bg-[#131316] px-5 text-[14px] font-medium text-white no-underline hover:bg-[#2a2a30]"
                 >
                   Download
