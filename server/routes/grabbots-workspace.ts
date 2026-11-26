@@ -401,8 +401,8 @@ export function createGrabBotsWorkspaceRoutes(deps: GrabBotsWorkspaceDeps = {}):
       return json(res, 200, payload);
     }
 
-    if (method === "GET" && pathname.startsWith("/api/grabbots/downloads/file/")) {
-      const requested = decodeURIComponent(pathname.slice("/api/grabbots/downloads/file/".length));
+    if (method === "GET" && path.startsWith("/api/grabbots/downloads/file/")) {
+      const requested = decodeURIComponent(path.slice("/api/grabbots/downloads/file/".length));
       const fileName = basename(requested);
       if (!fileName || fileName !== requested || fileName.includes("..")) {
         return json(res, 400, { error: "Invalid file name" });
