@@ -42,11 +42,11 @@ export function DuskDownloadPage() {
   const version = data?.version ?? "0.1.177";
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-white text-[#131316]" style={{ fontFamily: '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div className="h-screen overflow-y-auto bg-white text-[#131316]" style={{ fontFamily: '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
       <header className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-6 py-[18px]">
         <a href="/" className="inline-flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] text-[#131316] no-underline">
           <img src="/app-icon.svg" alt="" width={28} height={28} className="size-7 rounded-[7px]" />
-          <span>grabbots</span>
+          <span>GrabBots</span>
         </a>
         <nav className="flex items-center gap-1">
           <a href="/download" aria-current="page" className="rounded-full bg-[#f5f5f3] px-3 py-2 text-[15px] font-medium text-[#131316] no-underline">
@@ -63,30 +63,31 @@ export function DuskDownloadPage() {
 
       <main className="mx-auto w-full max-w-[1208px] px-6 pb-20 pt-10">
         <section className="max-w-2xl">
-          <h1 className="text-[clamp(44px,7vw,86px)] font-medium lowercase leading-[0.96] tracking-[-0.055em] text-[#131316]">
-            download
+          <h1 className="text-[clamp(44px,7vw,86px)] font-medium leading-[0.96] tracking-[-0.055em] text-[#131316]">
+            Download
             <br />
-            grabbots
+            GrabBots
           </h1>
           <p className="mt-5 max-w-[34em] text-[clamp(17px,1.5vw,20px)] leading-[1.5] tracking-[-0.012em] text-[#4b4b55]">
-            open it, sign in to the ai you already use or start on the free models, and your first bot is working a couple of minutes later. free for personal use, no account needed.
+            Open it, sign in to the AI you already use or start on the free models, and your first bot is working a couple of minutes later. Free for personal use, no account needed.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-2.5">
             <a
-              href="#all"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium lowercase text-white no-underline hover:bg-[#2a2a30]"
+              href={data?.platforms?.windows?.downloadUrl ?? "https://github.com/GrabbyGrabby/GrabBots/releases/latest/download/GrabBots-Setup.exe"}
+              download
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#131316] px-6 text-[16px] font-medium text-white no-underline hover:bg-[#2a2a30]"
             >
-              download for windows
+              Download for Windows
             </a>
             <a
               href="#all"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#efefed] px-6 text-[16px] font-medium lowercase text-[#131316] no-underline hover:bg-[#e4e4e1]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#efefed] px-6 text-[16px] font-medium text-[#131316] no-underline hover:bg-[#e4e4e1]"
             >
-              all downloads
+              All downloads
             </a>
           </div>
-          <p className="mt-3 text-[13px] font-medium lowercase text-[#55555f]">
-            windows 10 and 11 · linux · android apk · version {version}
+          <p className="mt-3 text-[13px] font-medium text-[#55555f]">
+            Windows 10 and 11 · Linux · Android APK · Version {version}
           </p>
         </section>
 
@@ -126,38 +127,41 @@ export function DuskDownloadPage() {
           <ul className="mt-6 divide-y divide-[#e9e9e6] border-y border-[#e9e9e6] p-0">
             <li className="flex flex-wrap items-center justify-between gap-4 py-4">
               <div>
-                <b className="text-[16px] font-medium lowercase text-[#131316]">windows</b>
-                <span className="ml-2 text-[14px] lowercase text-[#55555f]">x64 · installer .exe</span>
+                <b className="text-[16px] font-medium text-[#131316]">Windows</b>
+                <span className="ml-2 text-[14px] text-[#55555f]">x64 · Installer .exe</span>
               </div>
               <a
-                href={data?.platforms?.windows?.downloadUrl ?? "/"}
-                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium lowercase text-[#131316] no-underline hover:bg-[#e4e4e1]"
+                href={data?.platforms?.windows?.downloadUrl ?? "https://github.com/GrabbyGrabby/GrabBots/releases/latest/download/GrabBots-Setup.exe"}
+                download
+                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium text-[#131316] no-underline hover:bg-[#e4e4e1]"
               >
-                {data?.platforms?.windows?.available ? "download" : "build: pnpm package:win"}
+                Download
               </a>
             </li>
             <li className="flex flex-wrap items-center justify-between gap-4 py-4">
               <div>
-                <b className="text-[16px] font-medium lowercase text-[#131316]">linux</b>
-                <span className="ml-2 text-[14px] lowercase text-[#55555f]">x64 · .deb &amp; .appimage</span>
+                <b className="text-[16px] font-medium text-[#131316]">Linux</b>
+                <span className="ml-2 text-[14px] text-[#55555f]">x64 · .deb &amp; .AppImage</span>
               </div>
               <a
-                href={data?.platforms?.linux?.downloadUrl ?? "/"}
-                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium lowercase text-[#131316] no-underline hover:bg-[#e4e4e1]"
+                href={data?.platforms?.linux?.downloadUrl ?? "https://github.com/GrabbyGrabby/GrabBots/releases/latest/download/GrabBots.AppImage"}
+                download
+                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium text-[#131316] no-underline hover:bg-[#e4e4e1]"
               >
-                {data?.platforms?.linux?.available ? "download" : "build: pnpm package:linux"}
+                Download
               </a>
             </li>
             <li className="flex flex-wrap items-center justify-between gap-4 py-4">
               <div>
-                <b className="text-[16px] font-medium lowercase text-[#131316]">android</b>
-                <span className="ml-2 text-[14px] lowercase text-[#55555f]">phone app · .apk</span>
+                <b className="text-[16px] font-medium text-[#131316]">Android</b>
+                <span className="ml-2 text-[14px] text-[#55555f]">Phone app · .apk</span>
               </div>
               <a
-                href={data?.platforms?.android?.downloadUrl ?? "/"}
-                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium lowercase text-[#131316] no-underline hover:bg-[#e4e4e1]"
+                href={data?.platforms?.android?.downloadUrl ?? "https://github.com/GrabbyGrabby/GrabBots/releases/latest/download/GrabBots.apk"}
+                download
+                className="inline-flex min-h-[40px] items-center rounded-full bg-[#efefed] px-5 text-[14px] font-medium text-[#131316] no-underline hover:bg-[#e4e4e1]"
               >
-                {data?.platforms?.android?.available ? "download" : "build: pnpm build:apk"}
+                Download
               </a>
             </li>
           </ul>
